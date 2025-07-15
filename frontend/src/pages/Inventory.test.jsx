@@ -2,14 +2,23 @@ import { render, screen, waitFor } from '@testing-library/react';
 import userEvent from '@testing-library/user-event';
 import Inventory from './Inventory';
 import { describe, beforeEach, test, expect, vi } from 'vitest';
+import axios from 'axios';
 
-// Mock the fake backend module's functions if needed, 
-// but here we test as-is, so we can mock global prompts and confirms.
+vi.mock('axios');
 
 describe('Inventory Component', () => {
+  const mockInventory = [
+    { pk: 'Fruit', list: ['Apples'] },
+    { pk: 'Toiletries', list: ['Shampoo Bottles'] },
+    { pk: 'Electronics', list: ['Laptop Chargers'] },
+  ];
+
   beforeEach(() => {
-    // Reset fakeBackend if you extracted it for test isolation,
-    // or reload component fresh each test.
+    // Mock axios.get to return fake inventory
+    axios.get.mockResolvedValue({ data: mockInventory });
+
+    // Optional: clear previous mocks between tests
+    vi.clearAllMocks();
   });
 
   test('shows loading initially and then renders inventory categories and items', async () => {
@@ -17,7 +26,6 @@ describe('Inventory Component', () => {
 
     expect(screen.getByText(/loading/i)).toBeInTheDocument();
 
-    // Wait for the inventory to load
     await waitFor(() => {
       expect(screen.queryByText(/loading/i)).not.toBeInTheDocument();
     });
@@ -33,41 +41,68 @@ describe('Inventory Component', () => {
   });
 
   test('adds a new item and shows it in inventory', async () => {
+    axios.post.mockResolvedValue({ data: {} });
+
+    // When fetchInventory is called again after adding item, return updated list
+    axios.get
+      .mockResolvedValueOnce({ data: mockInventory }) // first load
+      .mockResolvedValueOnce({
+        data: [
+          ...mockInventory.map((entry) =>
+            entry.pk === 'Fruit'
+              ? { ...entry, list: [...entry.list, 'Bananas'] }
+              : entry
+          ),
+        ],
+      }); // after adding item
+
     render(<Inventory />);
 
-    await waitFor(() =>
-      expect(screen.queryByText(/loading/i)).not.toBeInTheDocument()
-    );
+    await waitFor(() => {
+      expect(screen.queryByText(/loading/i)).not.toBeInTheDocument();
+    });
 
-    await userEvent.type(screen.getByPlaceholderText(/name/i), 'Bananas');
-    await userEvent.type(screen.getByPlaceholderText(/quantity/i), '50');
-    await userEvent.type(screen.getByPlaceholderText(/category/i), 'Fruit');
-    await userEvent.click(screen.getByRole('button', { name: /add item/i }));
+    // Add new item in Fruit
+    await userEvent.type(
+      screen.getByPlaceholderText(/add new item to fruit/i),
+      'Bananas'
+    );
+    await userEvent.click(
+      screen.getAllByRole('button', { name: /add item/i })[0]
+    );
 
     await waitFor(() =>
       expect(screen.getByText('Bananas')).toBeInTheDocument()
     );
-
-    expect(screen.getByText('50')).toBeInTheDocument();
   });
 
   test('deletes an item when delete is clicked and confirm returns true', async () => {
+    vi.spyOn(window, 'confirm').mockReturnValue(true);
+
+    axios.delete.mockResolvedValue({ data: {} });
+
+    // When inventory is fetched after delete, return one item removed
+    axios.get
+      .mockResolvedValueOnce({ data: mockInventory }) // first load
+      .mockResolvedValueOnce({
+        data: [
+          { pk: 'Fruit', list: [] },
+          mockInventory[1],
+          mockInventory[2],
+        ],
+      }); // after delete
+
     render(<Inventory />);
 
-    await waitFor(() => expect(screen.queryByText(/loading/i)).not.toBeInTheDocument());
-
-    // Mock confirm to always return true
-    const confirmMock = vi.spyOn(window, 'confirm').mockReturnValue(true);
-
-    // Assume first Delete button corresponds to Apples
-    const deleteButtons = screen.getAllByRole('button', { name: /delete/i });
-    userEvent.click(deleteButtons[0]);
-
-    // Wait for Apples to disappear
     await waitFor(() => {
-      expect(screen.queryByText('Apples')).not.toBeInTheDocument();
+      expect(screen.queryByText(/loading/i)).not.toBeInTheDocument();
     });
 
-    confirmMock.mockRestore();
+    const deleteButtons = screen.getAllByRole('button', { name: /delete/i });
+    await userEvent.click(deleteButtons[0]); // Delete "Apples"
+
+    await waitFor(() =>
+      expect(screen.queryByText('Apples')).not.toBeInTheDocument()
+    );
   });
 });
