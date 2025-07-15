@@ -55,4 +55,4 @@ jobs:
         run: sam build
 
       - name: Deploy SAM application
-        run: sam deploy --no-confirm-changeset --no-fail-on-empty-changeset --stack-name my-backend-stack --capabilities CAPABILITY_IAM --region ${{ secrets.AWS_REGION }}
+        run: sam deploy --no-confirm-changeset --no-fail-on-empty-changeset --stack-name inventory --capabilities CAPABILITY_IAM --region ${{ secrets.AWS_REGION }}
