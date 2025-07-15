@@ -1,0 +1,151 @@
+AWSTemplateFormatVersion: '2010-09-09'
+Transform: AWS::Serverless-2016-10-31
+Description: Lambda + API Gateway using SAM
+
+Resources:
+  InventoryApi:
+    Type: AWS::Serverless::HttpApi
+    Properties:
+      Name: InventoryApi
+      CorsConfiguration:
+        AllowMethods:
+          - GET
+          - POST
+          - DELETE
+          - OPTIONS
+        AllowHeaders:
+          - "*"
+        AllowOrigins:
+          - http://localhost:5173
+
+  CreateInventoryCategory:
+    Type: AWS::Serverless::Function
+    Properties:
+      FunctionName: CreateInventoryCategory
+      Handler: index.handler
+      Runtime: nodejs22.x
+      CodeUri: createCategory/
+      Policies:
+        - DynamoDBCrudPolicy:
+            TableName: inventory
+      Events:
+        ApiForMyApp:
+          Type: HttpApi
+          Properties:
+            Path: /createCategory
+            Method: POST
+            ApiId: !Ref InventoryApi
+
+
+  CreateInventoryItem:
+    Type: AWS::Serverless::Function
+    Properties:
+      FunctionName: CreateInventoryItem
+      Handler: index.handler
+      Runtime: nodejs22.x
+      CodeUri: createItem/
+      Policies:
+        - DynamoDBCrudPolicy:
+            TableName: inventory
+      Events:
+        ApiForMyApp:
+          Type: HttpApi
+          Properties:
+            Path: /createItem
+            Method: POST
+            ApiId: !Ref InventoryApi
+
+  UpdateInventoryItem:
+    Type: AWS::Serverless::Function
+    Properties:
+      FunctionName: UpdateInventoryItem
+      Handler: index.handler
+      Runtime: nodejs22.x
+      CodeUri: update/
+      Policies:
+        - DynamoDBCrudPolicy:
+            TableName: inventory
+      Events:
+        ApiForMyApp:
+          Type: HttpApi
+          Properties:
+            Path: /update
+            Method: POST
+            ApiId: !Ref InventoryApi
+
+  GetInventoryItem:
+    Type: AWS::Serverless::Function
+    Properties:
+      FunctionName: GetInventoryItem
+      Handler: index.handler
+      Runtime: nodejs22.x
+      CodeUri: get/
+      Policies:
+        - DynamoDBCrudPolicy:
+            TableName: inventory
+      Events:
+        ApiForMyApp:
+          Type: HttpApi
+          Properties:
+            Path: /get
+            Method: GET
+            ApiId: !Ref InventoryApi
+
+  GetAllInventoryItems:
+    Type: AWS::Serverless::Function
+    Properties:
+      FunctionName: GetAllInventoryItems
+      Handler: index.handler
+      Runtime: nodejs22.x
+      CodeUri: getAll/
+      Policies:
+        - DynamoDBCrudPolicy:
+            TableName: inventory
+      Events:
+        ApiForMyApp:
+          Type: HttpApi
+          Properties:
+            Path: /getAll
+            Method: GET
+            ApiId: !Ref InventoryApi
+
+  DeleteInventoryCategory:
+    Type: AWS::Serverless::Function
+    Properties:
+      FunctionName: DeleteInventoryCategory
+      Handler: index.handler
+      Runtime: nodejs22.x
+      CodeUri: delete/
+      Policies:
+        - DynamoDBCrudPolicy:
+            TableName: inventory
+      Events:
+        ApiForMyApp:
+          Type: HttpApi
+          Properties:
+            Path: /deleteCategory
+            Method: POST
+            ApiId: !Ref InventoryApi
+
+  DeleteInventoryItem:
+    Type: AWS::Serverless::Function
+    Properties:
+      FunctionName: DeleteInventoryItem
+      Handler: index.handler
+      Runtime: nodejs22.x
+      CodeUri: deleteItem/
+      Policies:
+        - DynamoDBCrudPolicy:
+            TableName: inventory
+      Events:
+        ApiForMyApp:
+          Type: HttpApi
+          Properties:
+            Path: /deleteItem
+            Method: POST
+            ApiId: !Ref InventoryApi
+
+Outputs:
+  ApiUrl:
+    Description: "HTTP API endpoint base URL"
+    Value: !Sub "https://${InventoryApi}.execute-api.${AWS::Region}.amazonaws.com"
