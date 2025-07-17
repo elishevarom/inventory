@@ -15,7 +15,7 @@ describe('SiteHeader', () => {
   test('renders brand link with correct text and href', () => {
     const brandLink = screen.getByRole('link', { name: /inventory tracker/i });
     expect(brandLink).toBeInTheDocument();
-    expect(brandLink.getAttribute('href')).toBe('/hello');
+    expect(brandLink.getAttribute('href')).toBe('/');
   });
 
   test('renders navigation links with correct text and hrefs', () => {
