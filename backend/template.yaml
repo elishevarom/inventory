@@ -124,7 +124,7 @@ Resources:
           Type: HttpApi
           Properties:
             Path: /deleteCategory
-            Method: POST
+            Method: DELETE
             ApiId: !Ref InventoryApi
 
   DeleteInventoryItem:
@@ -142,7 +142,7 @@ Resources:
           Type: HttpApi
           Properties:
             Path: /deleteItem
-            Method: POST
+            Method: DELETE
             ApiId: !Ref InventoryApi
 
 Outputs:
