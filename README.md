@@ -51,3 +51,6 @@ This will deploy your Lambda functions and API Gateway endpoints.
 
 ### 4. Connect Frontend to Backend
 In your frontend code, set your API base URL to the deployed API Gateway URL from the SAM deploy output.
+
+## Author
+Mrs. Rom
